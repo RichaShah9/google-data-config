@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import GoogleContacts from "./GoogleContacts";
 
+import Loader from "./Loader";
 import "./App.css";
 
 const request = async (link, options) => {
@@ -12,19 +13,21 @@ function App() {
   const headers = new Headers();
   const [contacts, setContacts] = useState(null);
   const [accessToken, setAccessToken] = useState(null);
-
+  const [isLoading, setLoading] = useState(false);
   headers.append("Content-Type", "application/atom+xml");
   headers.append("GData-Version", "3.0");
   headers.append("Authorization", `Bearer ${accessToken}`);
   headers.append("If-Match", "*");
 
   const responseCallback = (response) => {
+    setLoading(false);
     if (response && response.length > 0) {
       setContacts(response);
     }
   };
 
   const editContact = async (link) => {
+    setLoading(true);
     let res = await request(link, {
       method: "GET",
       headers: headers,
@@ -57,10 +60,12 @@ function App() {
         body: newXml,
       });
     }
+    setLoading(false);
     alert("Updated");
   };
 
   const updateAllContacts = async () => {
+    setLoading(true);
     const links = contacts.map((contact) => contact.editLink);
     const fetchArray = [];
 
@@ -112,51 +117,55 @@ function App() {
     }
 
     await Promise.all(updateRequests);
+    setLoading(false);
     alert("updated");
   };
 
   return (
     <div>
-      <GoogleContacts
-        clientId="275879866675-dq1erjebbk3qur66cbtvpgm1abnmnu04.apps.googleusercontent.com"
-        buttonText="Import from Gmail"
-        onSuccess={responseCallback}
-        onFailure={responseCallback}
-        setAccessToken={setAccessToken}
-      />
-      {contacts && contacts.length > 0 && (
-        <button onClick={updateAllContacts}>Update all contacts</button>
-      )}
-      <table>
-        <tbody>
-          <tr>
-            <th>No</th>
-            <th>Title</th>
-            <th>Email</th>
-            <th>Phone</th>
-            <th>Age</th>
-            <th>AosId</th>
-            <th>Edit</th>
-          </tr>
-          {contacts &&
-            contacts.length > 0 &&
-            contacts.map((contact, i) => (
-              <tr key={i}>
-                <td>Contact {i}</td>
-                <td>{contact.title}</td>
-                <td>{contact.email}</td>
-                <td>{contact.phoneNumber}</td>
-                <td>{contact.age}</td>
-                <td>{contact.aosId}</td>
-                <td>
-                  <button onClick={() => editContact(contact.editLink)}>
-                    Edit Contact
-                  </button>
-                </td>
-              </tr>
-            ))}
-        </tbody>
-      </table>
+      <Loader isLoading={isLoading}>
+        <GoogleContacts
+          clientId="275879866675-dq1erjebbk3qur66cbtvpgm1abnmnu04.apps.googleusercontent.com"
+          buttonText="Import from Gmail"
+          onSuccess={responseCallback}
+          onFailure={responseCallback}
+          setAccessToken={setAccessToken}
+          setLoading={setLoading}
+        />
+        {contacts && contacts.length > 0 && (
+          <button onClick={updateAllContacts}>Update all contacts</button>
+        )}
+        <table>
+          <tbody>
+            <tr>
+              <th>No</th>
+              <th>Title</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Age</th>
+              <th>AosId</th>
+              <th>Edit</th>
+            </tr>
+            {contacts &&
+              contacts.length > 0 &&
+              contacts.map((contact, i) => (
+                <tr key={i}>
+                  <td>Contact {i}</td>
+                  <td>{contact.title}</td>
+                  <td>{contact.email}</td>
+                  <td>{contact.phoneNumber}</td>
+                  <td>{contact.age}</td>
+                  <td>{contact.aosId}</td>
+                  <td>
+                    <button onClick={() => editContact(contact.editLink)}>
+                      Edit Contact
+                    </button>
+                  </td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </Loader>
     </div>
   );
 }

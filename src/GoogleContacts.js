@@ -45,8 +45,8 @@ class GoogleContacts extends Component {
   }
 
   handleImportContacts(res) {
-    const { onFailure, setAccessToken } = this.props;
-
+    const { onFailure, setAccessToken, setLoading } = this.props;
+    setLoading(true)
     if (res) {
       const authResponse = res.getAuthResponse();
       setAccessToken(authResponse.access_token);
@@ -63,6 +63,7 @@ class GoogleContacts extends Component {
           .then(
             (response) => this.handleParseContacts(response),
             (err) => onFailure(err)
+            
           );
       });
     }

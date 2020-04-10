@@ -122,7 +122,7 @@ function App() {
   };
 
   return (
-    <div>
+    <div style={{ padding: 25 }}>
       <Loader isLoading={isLoading}>
         <GoogleContacts
           clientId="275879866675-dq1erjebbk3qur66cbtvpgm1abnmnu04.apps.googleusercontent.com"
@@ -133,9 +133,11 @@ function App() {
           setLoading={setLoading}
         />
         {contacts && contacts.length > 0 && (
-          <button onClick={updateAllContacts}>Update all contacts</button>
+          <button onClick={updateAllContacts} style={{ margin: 10 }}>
+            Update all contacts
+          </button>
         )}
-        <table>
+        <table style={{ margin: 10 }}>
           <tbody>
             <tr>
               <th>No</th>

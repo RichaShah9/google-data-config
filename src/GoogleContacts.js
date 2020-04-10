@@ -171,7 +171,9 @@ function GoogleContacts(props) {
 
   return (
     <React.Fragment>
-      <button onClick={signIn}>{props.buttonText}</button>
+      <button style={{ margin: 10 }} onClick={signIn}>
+        {props.buttonText}
+      </button>
     </React.Fragment>
   );
 }

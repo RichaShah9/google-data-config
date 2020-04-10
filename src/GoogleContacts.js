@@ -1,9 +1,6 @@
-import React, { Component } from "react";
+import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import xml from "xml-js";
-
-import Icon from "./icon";
-import ButtonContent from "./ButtonContent";
 
 import {
   extractTitleFromEntry,
@@ -14,20 +11,9 @@ import {
 const SCOPE = "https://www.googleapis.com/auth/contacts";
 const MAX_RESULTS = "999";
 
-class GoogleContacts extends Component {
-  constructor(props) {
-    super(props);
-    this.signIn = this.signIn.bind(this);
-    this.handleImportContacts = this.handleImportContacts.bind(this);
-    this.handleParseContacts = this.handleParseContacts.bind(this);
-    this.state = {
-      hovered: false,
-      active: false,
-    };
-  }
-
-  componentDidMount() {
-    const { jsSrc } = this.props;
+function GoogleContacts(props) {
+  useEffect(() => {
+    const { jsSrc } = props;
     ((d, s, id, cb) => {
       const element = d.getElementsByTagName(s)[0];
       const fjs = element;
@@ -42,11 +28,11 @@ class GoogleContacts extends Component {
       }
       js.onload = cb;
     })(document, "script", "google-contacts");
-  }
+  });
 
-  handleImportContacts(res) {
-    const { onFailure, setAccessToken, setLoading } = this.props;
-    setLoading(true)
+  const handleImportContacts = (res) => {
+    const { onFailure, setAccessToken, setLoading } = props;
+    setLoading(true);
     if (res) {
       const authResponse = res.getAuthResponse();
       setAccessToken(authResponse.access_token);
@@ -61,16 +47,15 @@ class GoogleContacts extends Component {
             },
           })
           .then(
-            (response) => this.handleParseContacts(response),
+            (response) => handleParseContacts(response),
             (err) => onFailure(err)
-            
           );
       });
     }
-  }
+  };
 
-  handleParseContacts(response) {
-    const { onSuccess } = this.props;
+  const handleParseContacts = (response) => {
+    const { onSuccess } = props;
 
     const options = {
       ignoreDeclaration: true,
@@ -114,9 +99,9 @@ class GoogleContacts extends Component {
     });
 
     onSuccess(results);
-  }
+  };
 
-  signIn(e) {
+  const signIn = (e) => {
     const {
       clientId,
       cookiePolicy,
@@ -131,7 +116,7 @@ class GoogleContacts extends Component {
       responseType,
       prompt,
       onSuccess,
-    } = this.props;
+    } = props;
 
     const params = {
       client_id: clientId,
@@ -152,120 +137,43 @@ class GoogleContacts extends Component {
     if (e) {
       e.preventDefault();
     }
-    if (!this.state.disabled) {
-      const _signIn = () => {
-        const auth2 = window.gapi.auth2.getAuthInstance();
-        const options = { prompt };
-        onRequest();
-        if (responseType === "code") {
-          auth2.grantOfflineAccess(options).then(
-            (res) => onSuccess(res),
-            (err) => onFailure(err)
-          );
-        } else {
-          auth2.signIn(options).then(
-            (res) => this.handleImportContacts(res),
-            (err) => onFailure(err)
-          );
-        }
-      };
+    const _signIn = () => {
+      const auth2 = window.gapi.auth2.getAuthInstance();
+      const options = { prompt };
+      onRequest();
+      if (responseType === "code") {
+        auth2.grantOfflineAccess(options).then(
+          (res) => onSuccess(res),
+          (err) => onFailure(err)
+        );
+      } else {
+        auth2.signIn(options).then(
+          (res) => handleImportContacts(res),
+          (err) => onFailure(err)
+        );
+      }
+    };
 
-      window.gapi.load("auth2", () => {
-        if (!window.gapi.auth2.getAuthInstance()) {
-          window.gapi.auth2.init(params).then(_signIn);
-        } else {
-          _signIn();
-        }
-      });
-    }
+    window.gapi.load("auth2", () => {
+      if (!window.gapi.auth2.getAuthInstance()) {
+        window.gapi.auth2.init(params).then(_signIn);
+      } else {
+        _signIn();
+      }
+    });
+  };
+
+  const { render } = props;
+
+  if (render) {
+    return render({ onClick: signIn });
   }
 
-  render() {
-    const {
-      tag,
-      type,
-      className,
-      disabledStyle,
-      buttonText,
-      children,
-      render,
-      theme,
-      icon,
-    } = this.props;
-    const disabled = this.state.disabled || this.props.disabled;
-
-    if (render) {
-      return render({ onClick: this.signIn });
-    }
-
-    const initialStyle = {
-      backgroundColor: theme === "dark" ? "rgb(66, 133, 244)" : "#fff",
-      display: "inline-flex",
-      alignItems: "center",
-      color: theme === "dark" ? "#fff" : "rgba(0, 0, 0, .54)",
-      boxShadow: "0 2px 2px 0 rgba(0, 0, 0, .24), 0 0 1px 0 rgba(0, 0, 0, .24)",
-      padding: 0,
-      borderRadius: 2,
-      border: "1px solid transparent",
-      fontSize: 14,
-      fontWeight: "500",
-      fontFamily: "Roboto, sans-serif",
-    };
-
-    const hoveredStyle = {
-      cursor: "pointer",
-      opacity: 0.9,
-    };
-
-    const activeStyle = {
-      cursor: "pointer",
-      backgroundColor: theme === "dark" ? "#3367D6" : "#eee",
-      color: theme === "dark" ? "#fff" : "rgba(0, 0, 0, .54)",
-      opacity: 1,
-    };
-
-    const defaultStyle = (() => {
-      if (disabled) {
-        return Object.assign({}, initialStyle, disabledStyle);
-      }
-
-      if (this.state.active) {
-        if (theme === "dark") {
-          return Object.assign({}, initialStyle, activeStyle);
-        }
-
-        return Object.assign({}, initialStyle, activeStyle);
-      }
-
-      if (this.state.hovered) {
-        return Object.assign({}, initialStyle, hoveredStyle);
-      }
-
-      return initialStyle;
-    })();
-    const googleLoginButton = React.createElement(
-      tag,
-      {
-        onMouseEnter: () => this.setState({ hovered: true }),
-        onMouseLeave: () => this.setState({ hovered: false, active: false }),
-        onMouseDown: () => this.setState({ active: true }),
-        onMouseUp: () => this.setState({ active: false }),
-        onClick: this.signIn,
-        style: defaultStyle,
-        type,
-        disabled,
-        className,
-      },
-      [
-        icon && <Icon key={1} active={this.state.active} />,
-        <ButtonContent icon={icon} key={2}>
-          {children || buttonText}
-        </ButtonContent>,
-      ]
-    );
-
-    return googleLoginButton;
-  }
+  return (
+    <React.Fragment>
+      <button onClick={signIn}>{props.buttonText}</button>
+    </React.Fragment>
+  );
 }
 
 GoogleContacts.propTypes = {
@@ -275,40 +183,9 @@ GoogleContacts.propTypes = {
   jsSrc: PropTypes.string,
   onRequest: PropTypes.func,
   buttonText: PropTypes.node,
-  className: PropTypes.string,
-  redirectUri: PropTypes.string,
-  cookiePolicy: PropTypes.string,
-  loginHint: PropTypes.string,
-  hostedDomain: PropTypes.string,
-  children: PropTypes.node,
-  disabledStyle: PropTypes.object,
-  prompt: PropTypes.string,
-  tag: PropTypes.string,
-  disabled: PropTypes.bool,
-  discoveryDocs: PropTypes.array,
-  uxMode: PropTypes.string,
-  responseType: PropTypes.string,
-  type: PropTypes.string,
-  accessType: PropTypes.string,
-  render: PropTypes.func,
-  theme: PropTypes.string,
-  icon: PropTypes.bool,
 };
 
 GoogleContacts.defaultProps = {
-  type: "button",
-  tag: "button",
-  buttonText: "Import from Gmail",
-  accessType: "online",
-  prompt: "consent",
-  cookiePolicy: "single_host_origin",
-  uxMode: "popup",
-  disabled: false,
-  disabledStyle: {
-    opacity: 0.6,
-  },
-  icon: true,
-  theme: "light",
   onRequest: () => {},
   jsSrc: "https://apis.google.com/js/api.js",
 };

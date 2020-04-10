@@ -126,7 +126,7 @@ function App() {
       <Loader isLoading={isLoading}>
         <GoogleContacts
           clientId="275879866675-dq1erjebbk3qur66cbtvpgm1abnmnu04.apps.googleusercontent.com"
-          buttonText="Import from Gmail"
+          buttonText="Import Google Contacts"
           onSuccess={responseCallback}
           onFailure={responseCallback}
           setAccessToken={setAccessToken}

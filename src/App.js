@@ -1,7 +1,9 @@
 import React, { useState } from "react";
+import moment from "moment";
 import GoogleContacts from "./GoogleContacts";
-
+import GoogleCalendar from "./GoogleCalendar";
 import Loader from "./Loader";
+
 import "./App.css";
 
 const request = async (link, options) => {
@@ -12,6 +14,7 @@ const request = async (link, options) => {
 function App() {
   const headers = new Headers();
   const [contacts, setContacts] = useState(null);
+  const [events, setEvents] = useState(null);
   const [accessToken, setAccessToken] = useState(null);
   const [isLoading, setLoading] = useState(false);
   headers.append("Content-Type", "application/atom+xml");
@@ -121,6 +124,36 @@ function App() {
     alert("updated");
   };
 
+  const responseCallbackEvent = (response) => {
+    setLoading(false);
+    setEvents(response);
+  };
+
+  const editEvent = (event) => {
+    var myHeaders = new Headers({
+      "Content-Type": "application/json",
+      "GData-Version": "3.0",
+      Authorization: `Bearer ${accessToken}`,
+    });
+
+    request(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events/${event.id}`,
+      {
+        method: "PATCH",
+        headers: myHeaders,
+        credentials: "include",
+        body: JSON.stringify({
+          id: event.id,
+          extendedProperties: {
+            private: {
+              aosId: "105",
+              age: "12"
+            },
+          },
+        }),
+      }
+    );
+  };
   return (
     <div style={{ padding: 25 }}>
       <Loader isLoading={isLoading}>
@@ -132,31 +165,36 @@ function App() {
           setAccessToken={setAccessToken}
           setLoading={setLoading}
         />
+        <GoogleCalendar
+          clientId="275879866675-dq1erjebbk3qur66cbtvpgm1abnmnu04.apps.googleusercontent.com"
+          buttonText="Import Calendar Events"
+          onSuccess={responseCallbackEvent}
+          onFailure={responseCallbackEvent}
+          setAccessToken={setAccessToken}
+          setLoading={setLoading}
+        />
         {contacts && contacts.length > 0 && (
           <button onClick={updateAllContacts} style={{ margin: 10 }}>
             Update all contacts
           </button>
         )}
-        <table style={{ margin: 10 }}>
-          <tbody>
-            <tr>
-              <th>No</th>
-              <th>Title</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Age</th>
-              <th>AosId</th>
-              <th>Edit</th>
-            </tr>
-            {contacts &&
-              contacts.length > 0 &&
-              contacts.map((contact, i) => (
+        {contacts && contacts.length > 0 && (
+          <table style={{ margin: 10 }}>
+            <tbody>
+              <tr>
+                <th>No</th>
+                <th>Title</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>AosId</th>
+                <th>Edit</th>
+              </tr>
+              {contacts.map((contact, i) => (
                 <tr key={i}>
                   <td>Contact {i}</td>
                   <td>{contact.title}</td>
                   <td>{contact.email}</td>
                   <td>{contact.phoneNumber}</td>
-                  <td>{contact.age}</td>
                   <td>{contact.aosId}</td>
                   <td>
                     <button onClick={() => editContact(contact.editLink)}>
@@ -165,8 +203,44 @@ function App() {
                   </td>
                 </tr>
               ))}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        )}
+        {events && events.length > 0 && (
+          <table style={{ margin: 10 }}>
+            <tbody>
+              <tr>
+                <th>No</th>
+                <th>Reason</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Extended Properties</th>
+                <th>Edit</th>
+              </tr>
+              {events.map((event, i) => (
+                <tr key={event.id}>
+                  <td style={{ textAlign: "center" }}>Event {i}</td>
+                  <td style={{ textAlign: "center" }}>{event.summary}</td>
+                  <td style={{ textAlign: "center" }}>
+                    {moment(event.start.dateTime).format("YYYY-MM-DD")}
+                  </td>
+                  <td style={{ textAlign: "center" }}>
+                    {moment(event.end.dateTime).format("YYYY-MM-DD")}
+                  </td>
+                  <td style={{ textAlign: "center" }}>
+                    {event &&
+                      event.extendedProperties &&
+                      event.extendedProperties.private &&
+                      event.extendedProperties.private.aosId}
+                  </td>
+                  <td>
+                    <button onClick={() => editEvent(event)}>Edit Event</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </Loader>
     </div>
   );

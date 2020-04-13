@@ -75,15 +75,16 @@ function GoogleContacts(props) {
         parsed.feed.entry[key]["gd:email"]._attributes &&
         parsed.feed.entry[key]["gd:email"]._attributes.address
       ) {
-        if (customFields && customFields.length > 0) {
-          Object.keys(customFields).forEach((field) => {
-            if (customFields[field]._attributes.key === "Age") {
-              age = customFields[field]._attributes.value;
-            }
-            if (customFields[field]._attributes.key === "AosId") {
-              aosId = customFields[field]._attributes.value;
-            }
-          });
+        if (customFields) {
+          if (Array.isArray(customFields) && customFields.length > 0) {
+            Object.keys(customFields).forEach((field) => {
+              if (customFields[field]._attributes.key === "AosId") {
+                aosId = customFields[field]._attributes.value;
+              }
+            });
+          } else {
+            aosId = customFields._attributes.value;
+          }
         }
         results.push({
           title: extractTitleFromEntry(parsed.feed.entry[key]),
@@ -113,9 +114,7 @@ function GoogleContacts(props) {
       onFailure,
       uxMode,
       accessType,
-      responseType,
       prompt,
-      onSuccess,
     } = props;
 
     const params = {
@@ -130,28 +129,15 @@ function GoogleContacts(props) {
       access_type: accessType,
     };
 
-    if (responseType === "code") {
-      params.access_type = "offline";
-    }
-
-    if (e) {
-      e.preventDefault();
-    }
+    e && e.preventDefault();
     const _signIn = () => {
       const auth2 = window.gapi.auth2.getAuthInstance();
       const options = { prompt };
       onRequest();
-      if (responseType === "code") {
-        auth2.grantOfflineAccess(options).then(
-          (res) => onSuccess(res),
-          (err) => onFailure(err)
-        );
-      } else {
-        auth2.signIn(options).then(
-          (res) => handleImportContacts(res),
-          (err) => onFailure(err)
-        );
-      }
+      auth2.signIn(options).then(
+        (res) => handleImportContacts(res),
+        (err) => onFailure(err)
+      );
     };
 
     window.gapi.load("auth2", () => {
@@ -162,12 +148,6 @@ function GoogleContacts(props) {
       }
     });
   };
-
-  const { render } = props;
-
-  if (render) {
-    return render({ onClick: signIn });
-  }
 
   return (
     <React.Fragment>

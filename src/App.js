@@ -147,13 +147,47 @@ function App() {
           extendedProperties: {
             private: {
               aosId: "105",
-              age: "12"
+              age: "12",
             },
           },
         }),
       }
     );
   };
+  
+  const updateAllEvents = async () => {
+    let myHeaders = new Headers({
+      "Content-Type": "application/json",
+      "GData-Version": "3.0",
+      Authorization: `Bearer ${accessToken}`,
+    });
+
+    let updateArray = [];
+    setLoading(true);
+    for (let i = 0; i < events.length; i++) {
+      updateArray.push(
+        await fetch(
+          `https://www.googleapis.com/calendar/v3/calendars/primary/events/${events[i].id}`,
+          {
+            method: "PUT",
+            headers: myHeaders,
+            credentials: "include",
+            body: JSON.stringify({
+              ...events[i],
+              extendedProperties: {
+                private: {
+                  aosId: 10
+                },
+              },
+            }),
+          }
+        )
+      );
+    }
+    Promise.all(updateArray);
+    setLoading(false);
+  };
+
   return (
     <div style={{ padding: 25 }}>
       <Loader isLoading={isLoading}>
@@ -176,6 +210,11 @@ function App() {
         {contacts && contacts.length > 0 && (
           <button onClick={updateAllContacts} style={{ margin: 10 }}>
             Update all contacts
+          </button>
+        )}
+        {events && events.length > 0 && (
+          <button onClick={updateAllEvents} style={{ margin: 10 }}>
+            Update all events
           </button>
         )}
         {contacts && contacts.length > 0 && (

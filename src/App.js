@@ -147,7 +147,7 @@ function App() {
           ...event,
           extendedProperties: {
             private: {
-              aosId: "Edit11",
+              aosId: "Edit1",
             },
           },
         }),

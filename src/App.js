@@ -49,12 +49,12 @@ function App() {
         let value = xml.match(strStart + "(.*?)" + strFinish)[1];
         newXml = xml.replace(
           strStart + value + strFinish,
-          "<gContact:userDefinedField key='AosId' value='101'/>"
+          "<gContact:userDefinedField key='AosId' value='Edit2'/>"
         );
       } else {
         matched = xml.substring(0, c);
         newXml = matched.concat(
-          `<gContact:userDefinedField key='AosId' value='1255'/></entry>`
+          `<gContact:userDefinedField key='AosId' value='Edit1'/></entry>`
         );
       }
       await request(link, {
@@ -101,12 +101,12 @@ function App() {
           let value = xmls[i].match(strStart + "(.*?)" + strFinish)[1];
           newXml = xmls[i].replace(
             strStart + value + strFinish,
-            "<gContact:userDefinedField key='AosId' value='500'/>"
+            "<gContact:userDefinedField key='AosId' value='MassUpdate2'/>"
           );
         } else {
           matched = xmls[i].substring(0, c);
           newXml = matched.concat(
-            `<gContact:userDefinedField key='AosId' value='10'/></entry>`
+            `<gContact:userDefinedField key='AosId' value='MassUpdate1'/></entry>`
           );
         }
         updateRequests.push(
@@ -129,32 +129,34 @@ function App() {
     setEvents(response);
   };
 
-  const editEvent = (event) => {
+  const editEvent = async (event) => {
+    setLoading(true);
     var myHeaders = new Headers({
       "Content-Type": "application/json",
       "GData-Version": "3.0",
       Authorization: `Bearer ${accessToken}`,
     });
 
-    request(
+    await request(
       `https://www.googleapis.com/calendar/v3/calendars/primary/events/${event.id}`,
       {
-        method: "PATCH",
+        method: "PUT",
         headers: myHeaders,
         credentials: "include",
         body: JSON.stringify({
-          id: event.id,
+          ...event,
           extendedProperties: {
             private: {
-              aosId: "105",
-              age: "12",
+              aosId: "Edit1",
             },
           },
         }),
       }
     );
+    setLoading(false);
+    alert("Updated");
   };
-  
+
   const updateAllEvents = async () => {
     let myHeaders = new Headers({
       "Content-Type": "application/json",
@@ -176,7 +178,7 @@ function App() {
               ...events[i],
               extendedProperties: {
                 private: {
-                  aosId: 10
+                  aosId: "MassUpdate1",
                 },
               },
             }),
@@ -207,6 +209,7 @@ function App() {
           setAccessToken={setAccessToken}
           setLoading={setLoading}
         />
+        <br />
         {contacts && contacts.length > 0 && (
           <button onClick={updateAllContacts} style={{ margin: 10 }}>
             Update all contacts

@@ -137,7 +137,7 @@ function App() {
       Authorization: `Bearer ${accessToken}`,
     });
 
-    await request(
+    let res = await request(
       `https://www.googleapis.com/calendar/v3/calendars/primary/events/${event.id}`,
       {
         method: "PUT",
@@ -147,12 +147,17 @@ function App() {
           ...event,
           extendedProperties: {
             private: {
-              aosId: "Edit1",
+              aosId: "Edit11",
             },
           },
         }),
       }
     );
+    let response = res && (await res.json());
+    let evs = [...events];
+    let index = events.findIndex((event) => event.id === response.id);
+    evs[index] = response;
+    setEvents([...evs]);
     setLoading(false);
     alert("Updated");
   };
@@ -186,7 +191,12 @@ function App() {
         )
       );
     }
-    Promise.all(updateArray);
+    let res = await Promise.all(updateArray);
+    let evs = [];
+    for (let i = 0; i < res.length; i++) {
+      evs.push(await res[i].json());
+    }
+    setEvents([...evs]);
     setLoading(false);
   };
 
